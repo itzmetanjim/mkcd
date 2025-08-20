@@ -1,0 +1,17 @@
+Metadata-Version: 2.4
+Name: mkcd
+Version: 0.0.0
+Summary: Get Linux utilities like tail,head,cat,cd,ls,cp,mv,rm in Windows directly without needing to manage WSL
+Author-email: Tanjim Kamal <tanjimkamal1@gmail.com>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/itzmetanjim/mkcd
+Project-URL: Issues, https://github.com/itzmetanjim/mkcd/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
+# mkcd
+Get all linux utilities like grep,head,tail,etc in Powershell and CMD directly
