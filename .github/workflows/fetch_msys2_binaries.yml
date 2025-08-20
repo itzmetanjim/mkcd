@@ -66,30 +66,32 @@ jobs:
         shell: pwsh
         run: |
           $target = Join-Path $Env:GITHUB_WORKSPACE 'artifacts\msys_x86_64'
-          $msysBin = 'C:\msys64\usr\bin'
           $bash = 'C:\msys64\usr\bin\bash.exe'
-
           if (-not (Test-Path $bash)) { throw 'MSYS2 bash not found' }
 
           $exes = Get-ChildItem -Path $target -Filter '*.exe' -File | Select-Object -ExpandProperty FullName
           $dlls = New-Object System.Collections.Generic.HashSet[string]
 
           foreach ($exe in $exes) {
-            $exePosix = & $bash -lc "cygpath -u \"$exe\"" | Out-String
+            # Pass Windows path via env var to avoid quoting issues
+            $Env:W_EXE = $exe
+            $exePosix = (& $bash -lc 'cygpath -u "$W_EXE"') -join "`n"
             $exePosix = $exePosix.Trim()
             if (-not $exePosix) { continue }
 
-            $lddOut = & $bash -lc "ldd \"$exePosix\" || true" | Out-String
+            $Env:P_POSIX = $exePosix
+            $lddOut = (& $bash -lc 'ldd "$P_POSIX" || true') -join "`n"
+
             foreach ($line in $lddOut -split "`n") {
               $m = [regex]::Match($line, '=>\s+(/[^\s]+)')
-              if (-not $m.Success) {
-                $m = [regex]::Match($line, '^\s+(/[^\s]+)')
-              }
+              if (-not $m.Success) { $m = [regex]::Match($line, '^\s+(/[^\s]+)') }
               if ($m.Success) {
                 $posixPath = $m.Groups[1].Value
                 if ($posixPath -like '*.dll') {
-                  $winPath = $posixPath -replace '^/usr/bin/', 'C:\\msys64\\usr\\bin\\' -replace '^/mingw64/bin/', 'C:\\msys64\\mingw64\\bin\\'
-                  if (Test-Path $winPath) { [void]$dlls.Add($winPath) }
+                  $Env:P_PATH = $posixPath
+                  $winPath = (& $bash -lc 'cygpath -w "$P_PATH"') -join "`n"
+                  $winPath = $winPath.Trim()
+                  if ($winPath -and (Test-Path $winPath)) { [void]$dlls.Add($winPath) }
                 }
               }
             }
