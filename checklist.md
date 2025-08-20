@@ -103,7 +103,7 @@ Environment and session
 - [ ] yes
 - [ ] true
 - [ ] false
-- [ ] test, [
+- [ ] test
 - [ ] expr
 - [ ] seq
 - [ ] tee
