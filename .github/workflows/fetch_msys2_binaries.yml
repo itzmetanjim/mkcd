@@ -1,0 +1,73 @@
+name: Fetch MSYS2 mingw-w64 binaries
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fetch-msys2-binaries:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSYS2 and install mingw packages
+        uses: msys2/setup-msys2@v3
+        with:
+          update: true
+          install: |
+            mingw-w64-x86_64-coreutils
+            mingw-w64-x86_64-grep
+            mingw-w64-x86_64-sed
+            mingw-w64-x86_64-gawk
+            mingw-w64-x86_64-findutils
+            mingw-w64-x86_64-diffutils
+            mingw-w64-x86_64-file
+            mingw-w64-x86_64-which
+            mingw-w64-x86_64-tar
+            mingw-w64-x86_64-zip
+            mingw-w64-x86_64-unzip
+            mingw-w64-x86_64-gzip
+            mingw-w64-x86_64-bzip2
+            mingw-w64-x86_64-xz
+
+      - name: Prepare target directory and copy selected binaries
+        shell: pwsh
+        run: |
+          $target = Join-Path $Env:GITHUB_WORKSPACE 'src\mkcd\_bin\windows_x86_64'
+          New-Item -ItemType Directory -Force -Path $target | Out-Null
+
+          $mingwBin = 'C:\msys64\mingw64\bin'
+
+          $bins = @(
+            'ls.exe','cp.exe','mv.exe','rm.exe','rmdir.exe','mkdir.exe','install.exe','ln.exe',
+            'readlink.exe','realpath.exe','stat.exe','touch.exe','chmod.exe','chown.exe','pwd.exe',
+            'du.exe','df.exe','sync.exe','truncate.exe','cat.exe','head.exe','tail.exe','nl.exe','wc.exe',
+            'cut.exe','paste.exe','join.exe','sort.exe','uniq.exe','tr.exe','od.exe','fold.exe','fmt.exe',
+            'column.exe','expand.exe','unexpand.exe','sed.exe','gawk.exe','grep.exe','xargs.exe','tee.exe',
+            'split.exe','csplit.exe','comm.exe','find.exe','which.exe','tar.exe','gzip.exe','gunzip.exe',
+            'bzip2.exe','bunzip2.exe','xz.exe','unxz.exe','zip.exe','unzip.exe','md5sum.exe','sha1sum.exe',
+            'sha256sum.exe','base64.exe','uname.exe','hostname.exe','whoami.exe','id.exe','date.exe'
+          )
+
+          foreach ($b in $bins) {
+            $src = Join-Path $mingwBin $b
+            if (Test-Path $src) {
+              Copy-Item -Path $src -Destination $target -Force
+              Write-Host "Copied $b"
+            } else {
+              Write-Host "Missing $b in mingw bin; skipping"
+            }
+          }
+
+      - name: List copied files
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path 'src\mkcd\_bin\windows_x86_64' -File | Sort-Object Name | ForEach-Object { Write-Host $_.Name }
+
+      - name: Upload binaries artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: msys2-mingw64-binaries-windows_x86_64
+          path: src/mkcd/_bin/windows_x86_64
