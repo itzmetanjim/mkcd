@@ -1,2 +1,4 @@
 apikey
 .vscode/
+src/mkcd/_bin/windows_x86_64/*.exe
+src/mkcd/_bin/windows_x86_64/*.dll

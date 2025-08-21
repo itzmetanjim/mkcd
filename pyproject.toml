@@ -1,6 +1,6 @@
 [project]
 name = "mkcd"
-version = "1.0.0"
+version = "1.0.2"
 authors = [
   { name="Tanjim Kamal", email="tanjimkamal1@gmail.com" },
 ]
@@ -17,6 +17,18 @@ license-files = ["LICEN[CS]E*"]
 [project.urls]
 Homepage = "https://github.com/itzmetanjim/mkcd"
 Issues = "https://github.com/itzmetanjim/mkcd/issues"
+
+[tool.setuptools.package-data]
+mkcd = ["_bin/windows_x86_64/*"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+mkcd-install = "mkcd:install"
+mkcd-uninstall = "mkcd:uninstall"
+ls = "mkcd.wrappers:ls_color"
+grep = "mkcd.wrappers:grep_color"
 
 [build-system]
 requires = ["setuptools >= 77.0.3"]

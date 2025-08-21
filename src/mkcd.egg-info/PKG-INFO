@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: mkcd
-Version: 0.0.0
+Version: 1.0.1
 Summary: Get Linux utilities like tail,head,cat,cd,ls,cp,mv,rm in Windows directly without needing to manage WSL
 Author-email: Tanjim Kamal <tanjimkamal1@gmail.com>
 License-Expression: MIT
