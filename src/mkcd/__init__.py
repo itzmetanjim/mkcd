@@ -9,6 +9,7 @@ import os
 import sys
 from pathlib import Path
 import subprocess
+import ctypes
 
 # Import Windows-specific modules only on Windows
 if sys.platform == "win32":
@@ -19,7 +20,83 @@ if sys.platform == "win32":
 else:
     winreg = None
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
+
+def is_admin():
+    """Check if the current process is running with administrator privileges."""
+    if sys.platform != "win32":
+        return False
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except Exception:
+        return False
+
+def request_admin():
+    """Request administrator privileges by re-running the script with UAC elevation."""
+    if sys.platform != "win32":
+        print("Admin privilege elevation only supported on Windows")
+        return False
+    
+    if is_admin():
+        return True
+    
+    try:
+        print("System PATH modification requires administrator privileges.")
+        print("This will spawn a new elevated command prompt window.")
+        user_input = input("Would you like to request admin privileges? (Y/n): ").lower().strip()
+
+        if user_input not in ['y', 'yes', '']:
+            return False
+        
+        # Create a temporary script to run the command with elevation
+        import tempfile
+        import time
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.bat', delete=False) as f:
+            # Determine which command was being run
+            cmd_name = "mkcd-install" if "install" in sys.argv[0] or any("install" in arg for arg in sys.argv) else "mkcd-uninstall"
+            f.write(f'@echo off\n')
+            f.write(f'echo Running {cmd_name} with administrator privileges...\n')
+            f.write(f'"{sys.executable}" -c "import mkcd; ')
+            if "install" in cmd_name:
+                f.write('mkcd.install()"')
+            else:
+                f.write('mkcd.uninstall()"')
+            f.write('\n')
+            f.write('echo.\n')
+            f.write('echo Operation completed. Press any key to close this window...\n')
+            f.write('pause > nul\n')
+            f.write(f'del "{f.name}"\n')
+            temp_script = f.name
+        
+        print("Requesting administrator privileges...")
+        print("Please click 'Yes' in the UAC dialog that appears.")
+        
+        # Use ShellExecuteW to run with elevated privileges
+        result = ctypes.windll.shell32.ShellExecuteW(
+            None, 
+            "runas", 
+            temp_script,
+            None,
+            None, 
+            1  # SW_SHOWNORMAL
+        )
+        
+        if result > 32:  # Success
+            print("Admin privileges granted. Operation running in elevated window...")
+            print("Please check the elevated command window for results.")
+            return True
+        else:
+            print("Failed to request admin privileges or user declined.")
+            try:
+                os.unlink(temp_script)
+            except:
+                pass
+            return False
+            
+    except Exception as e:
+        print(f"Error requesting admin privileges: {e}")
+        return False
 
 def get_bin_directory():
     """Get the absolute path to the bundled binary directory."""
@@ -34,6 +111,169 @@ def get_bin_directory():
         print(f"Debug: Directory contents: {list(package_dir.iterdir()) if package_dir.exists() else 'Package dir does not exist'}")
     
     return bin_path
+
+def get_available_utilities():
+    """Get list of available utility executables from the binary directory."""
+    bin_dir = get_bin_directory()
+    if not os.path.exists(bin_dir):
+        return []
+    
+    utilities = []
+    for exe_file in Path(bin_dir).glob("*.exe"):
+        utility_name = exe_file.stem  # Remove .exe extension
+        utilities.append(utility_name)
+    
+    return utilities
+
+def detect_powershell_aliases():
+    """Detect PowerShell aliases that conflict with our utilities."""
+    try:
+        utilities = get_available_utilities()
+        if not utilities:
+            return {}
+        
+        # Get all PowerShell aliases
+        result = subprocess.run(
+            ["powershell", "-Command", "Get-Alias | ForEach-Object { $_.Name + ':' + $_.Definition }"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        
+        if result.returncode != 0:
+            print(f"Warning: Could not detect PowerShell aliases: {result.stderr}")
+            return {}
+        
+        aliases = {}
+        for line in result.stdout.strip().split('\n'):
+            if ':' in line:
+                alias_name, definition = line.split(':', 1)
+                aliases[alias_name.strip()] = definition.strip()
+        
+        # Find conflicting aliases
+        conflicting_aliases = {}
+        for utility in utilities:
+            if utility in aliases:
+                conflicting_aliases[utility] = aliases[utility]
+        
+        return conflicting_aliases
+        
+    except Exception as e:
+        print(f"Warning: Error detecting PowerShell aliases: {e}")
+        return {}
+
+def remove_powershell_aliases(aliases_to_remove):
+    """Remove conflicting PowerShell aliases by modifying the PowerShell profile."""
+    if not aliases_to_remove:
+        return True
+    
+    try:
+        print(f"Removing {len(aliases_to_remove)} conflicting PowerShell aliases...")
+        
+        # Get PowerShell profile path
+        result = subprocess.run(
+            ["powershell", "-Command", "$PROFILE"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        
+        if result.returncode != 0:
+            print("Warning: Could not get PowerShell profile path")
+            return False
+        
+        profile_path = result.stdout.strip()
+        
+        # Create profile directory if it doesn't exist
+        profile_dir = os.path.dirname(profile_path)
+        os.makedirs(profile_dir, exist_ok=True)
+        
+        # Read existing profile content
+        profile_content = ""
+        if os.path.exists(profile_path):
+            with open(profile_path, 'r', encoding='utf-8') as f:
+                profile_content = f.read()
+        
+        # Add commands to remove aliases
+        mkcd_section_start = "# MKCD - Remove conflicting aliases (auto-generated)\n"
+        mkcd_section_end = "# End MKCD section\n"
+        
+        # Remove existing MKCD section if present
+        start_idx = profile_content.find(mkcd_section_start)
+        if start_idx != -1:
+            end_idx = profile_content.find(mkcd_section_end, start_idx)
+            if end_idx != -1:
+                profile_content = profile_content[:start_idx] + profile_content[end_idx + len(mkcd_section_end):]
+        
+        # Add new MKCD section
+        mkcd_commands = [mkcd_section_start]
+        for alias_name, original_def in aliases_to_remove.items():
+            mkcd_commands.append(f"if (Get-Alias {alias_name} -ErrorAction SilentlyContinue) {{ Remove-Item alias:{alias_name} -Force }}\n")
+        mkcd_commands.append(mkcd_section_end)
+        
+        # Write updated profile
+        updated_content = profile_content + "\n" + "".join(mkcd_commands)
+        with open(profile_path, 'w', encoding='utf-8') as f:
+            f.write(updated_content)
+        
+        print(f"Updated PowerShell profile: {profile_path}")
+        for alias_name, original_def in aliases_to_remove.items():
+            print(f"  Removed alias: {alias_name} -> {original_def}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"Warning: Failed to remove PowerShell aliases: {e}")
+        return False
+
+def restore_powershell_aliases():
+    """Restore PowerShell aliases by removing MKCD modifications from the profile."""
+    try:
+        # Get PowerShell profile path
+        result = subprocess.run(
+            ["powershell", "-Command", "$PROFILE"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        
+        if result.returncode != 0:
+            print("Warning: Could not get PowerShell profile path")
+            return False
+        
+        profile_path = result.stdout.strip()
+        
+        if not os.path.exists(profile_path):
+            print("No PowerShell profile found to restore")
+            return True
+        
+        # Read existing profile content
+        with open(profile_path, 'r', encoding='utf-8') as f:
+            profile_content = f.read()
+        
+        # Remove MKCD section
+        mkcd_section_start = "# MKCD - Remove conflicting aliases (auto-generated)\n"
+        mkcd_section_end = "# End MKCD section\n"
+        
+        start_idx = profile_content.find(mkcd_section_start)
+        if start_idx != -1:
+            end_idx = profile_content.find(mkcd_section_end, start_idx)
+            if end_idx != -1:
+                updated_content = profile_content[:start_idx] + profile_content[end_idx + len(mkcd_section_end):]
+                
+                # Write updated profile
+                with open(profile_path, 'w', encoding='utf-8') as f:
+                    f.write(updated_content)
+                
+                print("Restored PowerShell aliases by removing MKCD modifications")
+                return True
+        
+        print("No MKCD modifications found in PowerShell profile")
+        return True
+        
+    except Exception as e:
+        print(f"Warning: Failed to restore PowerShell aliases: {e}")
+        return False
 
 def add_to_path():
     """Add the binary directory to the system PATH."""
@@ -74,9 +314,17 @@ def add_to_path():
                 print(f"NOTE: To add manually, type in PowerShell: $env:Path += ';{bin_dir}'")
                 print(f"or in CMD: setx PATH \"%PATH%;{bin_dir}\"")
                 return True
-                
         except PermissionError:
-            print("System PATH modification requires admin privileges. Falling back to user PATH...")
+            if not is_admin():
+                print("System PATH modification requires admin privileges.")
+                if request_admin():
+                    print("System PATH modification attempted in elevated window.")
+                    print("Falling back to user PATH for current session...")
+                else:
+                    print("Falling back to user PATH...")
+            else:
+                print("Running as admin but still got PermissionError. Falling back to user PATH...")
+            
             print(f"NOTE: To add manually, type in PowerShell: $env:Path += ';{bin_dir}'")
             print(f"or in CMD: setx PATH \"%PATH%;{bin_dir}\"")
             # Fall back to user PATH
@@ -140,12 +388,19 @@ def remove_from_path():
                     winreg.SetValueEx(key, "PATH", 0, winreg.REG_EXPAND_SZ, new_path)
                     print(f"Successfully removed from system PATH: {bin_dir}")
                     success = True
-                    
-            except FileNotFoundError:
+                      except FileNotFoundError:
                 pass  # No system PATH variable
                 
     except PermissionError:
-        print("System PATH modification requires admin privileges. Checking user PATH...")
+        if not is_admin():
+            print("System PATH modification requires admin privileges.")
+            if request_admin():
+                print("System PATH modification attempted in elevated window.")
+                print("Continuing with user PATH cleanup...")
+            else:
+                print("Checking user PATH only...")
+        else:
+            print("Running as admin but still got PermissionError. Checking user PATH...")
     except Exception as e:
         print(f"Error checking system PATH: {e}")
     
@@ -191,6 +446,14 @@ def install():
     dll_files = list(Path(bin_dir).glob("*.dll"))
     print(f"Found {len(exe_files)} executables and {len(dll_files)} DLL files")
     
+    # Detect and handle PowerShell aliases
+    conflicting_aliases = detect_powershell_aliases()
+    if conflicting_aliases:
+        print("Conflicting PowerShell aliases detected:")
+        for alias, definition in conflicting_aliases.items():
+            print(f"  {alias} -> {definition}")
+        remove_powershell_aliases(conflicting_aliases)
+    
     success = add_to_path()
     if success:
         print("Installation complete! Linux utilities are now available in your shell.")
@@ -206,6 +469,10 @@ def install():
 def uninstall():
     """Uninstall mkcd and remove binaries from PATH."""
     print("Uninstalling mkcd utilities...")
+    
+    # Restore PowerShell aliases
+    restore_powershell_aliases()
+    
     success = remove_from_path()
     if success:
         print("Uninstallation complete!")
