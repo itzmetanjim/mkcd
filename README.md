@@ -18,26 +18,30 @@ No learning curve. No compatibility issues. Just the Linux tools you know and lo
 ## Installation
 
 Getting started with MKCD is straightforward, but there are a few important steps to follow:
+> Note: `ls`, `cat`, `curl`, etc are mapped as aliases in PowerShell (which can cause confusion when you type something like `ls -la`), but they are removed and readded automatically on install/uninstall.
 
 ### Step 1: Install the Package
-```powershell
+```bash
 pip install mkcd
 ```
 
 ### Step 2: Run the Installer
-```powershell
+```bash
 mkcd-install
 ```
-
+If Python scripts are not on PATH, you can run this:
+```bash
+python -c "import mkcd;mkcd.install()"
+```
 This will:
 1. Launch a User Account Control (UAC) dialog asking for administrator privileges
-2. Click "Yes" to grant permission (required to modify system PATH)
+2. You will have to click "Yes" to grant permission (required to modify system PATH)
 3. Open a new elevated command window
 4. After the installation completes and shows "Operation completed. Press any key to close this window...", press Enter
 5. The elevated window will close automatically
 
 ### Step 3: Open a New Terminal
-**Important**: You must open a completely new terminal window for the changes to take effect. Simply opening a new tab in Windows Terminal may not work - you need to close and reopen the entire application.
+> **Important**: You must open a completely new terminal window for the changes to take effect. Simply opening a new tab in Windows Terminal may not work - you need to close and reopen the entire application.
 
 If commands still aren't recognized after opening a new terminal, a system restart may be required.
 
@@ -45,9 +49,9 @@ If commands still aren't recognized after opening a new terminal, a system resta
 
 Once installed, you can immediately start using Linux commands in any Windows terminal:
 
-```powershell
+```bash
 # List files with details and colors
-ls -la
+ls.exe -la
 
 # Search for text in files
 grep "error" *.log
@@ -81,12 +85,12 @@ The installer needs administrator privileges to modify your system PATH. This is
 
 ### Uninstalling
 To remove MKCD utilities from your PATH:
-```powershell
+```bash
 mkcd-uninstall
 ```
 
 To completely remove the package:
-```powershell
+```bash
 pip uninstall mkcd
 ```
 
@@ -114,3 +118,4 @@ And many more! Each command works just like its Linux counterpart, with the same
 ## License
 
 MKCD is released under the MIT License. See the LICENSE file for details.
+The MSYS2 project, which provides the underlying tools, is licensed under the GNU General Public License v3.0 (GPL-3.0). MKCD does not include any GPL-licensed code; it simply uses the MSYS2 environment to compile and run the utilities.

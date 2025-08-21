@@ -20,7 +20,7 @@ if sys.platform == "win32":
 else:
     winreg = None
 
-__version__ = "1.0.3"
+__version__ = "1.0.5"
 
 def is_admin():
     """Check if the current process is running with administrator privileges."""
@@ -47,18 +47,18 @@ def request_admin():
 
         if user_input not in ['y', 'yes', '']:
             return False
-        
-        # Create a temporary script to run the command with elevation
+          # Create a temporary script to run the command with elevation
         import tempfile
         import time
         
         with tempfile.NamedTemporaryFile(mode='w', suffix='.bat', delete=False) as f:
-            # Determine which command was being run
-            cmd_name = "mkcd-install" if "install" in sys.argv[0] or any("install" in arg for arg in sys.argv) else "mkcd-uninstall"
+            # Determine which command was being run - fix the logic to prevent uninstall being detected as install
+            is_install = any("install" in arg and "uninstall" not in arg for arg in sys.argv) or ("install" in sys.argv[0] and "uninstall" not in sys.argv[0])
+            cmd_name = "mkcd-install" if is_install else "mkcd-uninstall"
             f.write(f'@echo off\n')
             f.write(f'echo Running {cmd_name} with administrator privileges...\n')
             f.write(f'"{sys.executable}" -c "import mkcd; ')
-            if "install" in cmd_name:
+            if is_install:
                 f.write('mkcd.install()"')
             else:
                 f.write('mkcd.uninstall()"')
@@ -132,21 +132,24 @@ def detect_powershell_aliases():
         if not utilities:
             return {}
         
-        # Get all PowerShell aliases
+        print("Checking for conflicting PowerShell aliases...")
+        
+        # Get all PowerShell aliases with shorter timeout and simpler command
         result = subprocess.run(
             ["powershell", "-Command", "Get-Alias | ForEach-Object { $_.Name + ':' + $_.Definition }"],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=5  # Reduced timeout from 10 to 5 seconds
         )
         
         if result.returncode != 0:
-            print(f"Warning: Could not detect PowerShell aliases: {result.stderr}")
+            print(f"Warning: Could not detect PowerShell aliases (timeout or error): {result.stderr}")
+            print("Skipping alias conflict detection - continuing with installation...")
             return {}
         
         aliases = {}
         for line in result.stdout.strip().split('\n'):
-            if ':' in line:
+            if line and ':' in line:
                 alias_name, definition = line.split(':', 1)
                 aliases[alias_name.strip()] = definition.strip()
         
@@ -156,10 +159,15 @@ def detect_powershell_aliases():
             if utility in aliases:
                 conflicting_aliases[utility] = aliases[utility]
         
+        print(f"Found {len(conflicting_aliases)} conflicting aliases")
         return conflicting_aliases
         
+    except subprocess.TimeoutExpired:
+        print("Warning: PowerShell alias detection timed out - skipping conflict detection")
+        return {}
     except Exception as e:
         print(f"Warning: Error detecting PowerShell aliases: {e}")
+        print("Skipping alias conflict detection - continuing with installation...")
         return {}
 
 def remove_powershell_aliases(aliases_to_remove):
@@ -175,7 +183,7 @@ def remove_powershell_aliases(aliases_to_remove):
             ["powershell", "-Command", "$PROFILE"],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=5  # Reduced timeout
         )
         
         if result.returncode != 0:
@@ -234,7 +242,7 @@ def restore_powershell_aliases():
             ["powershell", "-Command", "$PROFILE"],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=5  # Reduced timeout
         )
         
         if result.returncode != 0:
@@ -388,7 +396,8 @@ def remove_from_path():
                     winreg.SetValueEx(key, "PATH", 0, winreg.REG_EXPAND_SZ, new_path)
                     print(f"Successfully removed from system PATH: {bin_dir}")
                     success = True
-                      except FileNotFoundError:
+                    
+            except FileNotFoundError:
                 pass  # No system PATH variable
                 
     except PermissionError:
@@ -440,19 +449,24 @@ def install():
         print(f"Error: Binary directory not found: {bin_dir}")
         print("The package may not have been built correctly.")
         return False
-        
-    # Count available binaries
+          # Count available binaries
     exe_files = list(Path(bin_dir).glob("*.exe"))
     dll_files = list(Path(bin_dir).glob("*.dll"))
     print(f"Found {len(exe_files)} executables and {len(dll_files)} DLL files")
     
-    # Detect and handle PowerShell aliases
-    conflicting_aliases = detect_powershell_aliases()
-    if conflicting_aliases:
-        print("Conflicting PowerShell aliases detected:")
-        for alias, definition in conflicting_aliases.items():
-            print(f"  {alias} -> {definition}")
-        remove_powershell_aliases(conflicting_aliases)
+    # Detect and handle PowerShell aliases (optional, don't fail installation if this fails)
+    try:
+        conflicting_aliases = detect_powershell_aliases()
+        if conflicting_aliases:
+            print("Conflicting PowerShell aliases detected:")
+            for alias, definition in conflicting_aliases.items():
+                print(f"  {alias} -> {definition}")
+            remove_powershell_aliases(conflicting_aliases)
+        else:
+            print("No conflicting PowerShell aliases found")
+    except Exception as e:
+        print(f"Warning: Alias detection failed: {e}")
+        print("Continuing with installation...")
     
     success = add_to_path()
     if success:
