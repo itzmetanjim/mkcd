@@ -1,4 +1,4 @@
-name: Fetch MSYS2 (MSYS) binaries
+name: Fetch MSYS2 binaries (comprehensive)
 
 on:
   workflow_dispatch:
@@ -32,6 +32,47 @@ jobs:
             gzip
             bzip2
             xz
+            zstd
+            curl
+            wget
+            tree
+            patch
+            procps-ng
+            psmisc
+            util-linux
+            ncurses
+            less
+            binutils
+            openssh
+            inetutils
+            rsync
+            texinfo
+            man-db
+            nano
+            vim
+            bc
+            time
+            patchutils
+            dos2unix
+            p7zip
+            make
+            autoconf
+            automake
+            libtool
+            pkg-config
+            git
+            subversion
+            mercurial
+            cvs
+            screen
+            tmux
+            jq
+            nmap
+            socat
+            sqlite
+            figlet
+            units
+            calc
 
       - name: Prepare target directory and copy selected binaries (MSYS builds)
         shell: pwsh
@@ -40,25 +81,145 @@ jobs:
           New-Item -ItemType Directory -Force -Path $target | Out-Null
 
           $msysBin = 'C:\msys64\usr\bin'
+          $mingwBin = 'C:\msys64\mingw64\bin'
 
           $bins = @(
+            # Core file operations
             'ls.exe','cp.exe','mv.exe','rm.exe','rmdir.exe','mkdir.exe','install.exe','ln.exe',
             'readlink.exe','realpath.exe','stat.exe','touch.exe','chmod.exe','chown.exe','pwd.exe',
-            'du.exe','df.exe','sync.exe','truncate.exe','cat.exe','head.exe','tail.exe','nl.exe','wc.exe',
+            'du.exe','df.exe','sync.exe','truncate.exe','mktemp.exe','pathchk.exe',
+            
+            # Text processing and viewing
+            'cat.exe','tac.exe','head.exe','tail.exe','nl.exe','wc.exe','rev.exe',
             'cut.exe','paste.exe','join.exe','sort.exe','uniq.exe','tr.exe','od.exe','fold.exe','fmt.exe',
-            'column.exe','expand.exe','unexpand.exe','sed.exe','gawk.exe','grep.exe','egrep.exe','fgrep.exe','xargs.exe','tee.exe',
-            'split.exe','csplit.exe','comm.exe','find.exe','which.exe','tar.exe','gzip.exe','gunzip.exe',
-            'bzip2.exe','bunzip2.exe','xz.exe','unxz.exe','zip.exe','unzip.exe','md5sum.exe','sha1sum.exe',
-            'sha256sum.exe','base64.exe','uname.exe','hostname.exe','whoami.exe','id.exe','date.exe'
+            'column.exe','expand.exe','unexpand.exe','sed.exe','gawk.exe','grep.exe','egrep.exe','fgrep.exe',
+            'xargs.exe','tee.exe','split.exe','csplit.exe','comm.exe','shuf.exe','tsort.exe',
+            'less.exe','more.exe','hexdump.exe','strings.exe',
+            
+            # Search and find
+            'find.exe','which.exe','whereis.exe','locate.exe',
+            
+            # Archives and compression
+            'tar.exe','gzip.exe','gunzip.exe','zcat.exe','bzip2.exe','bunzip2.exe','bzcat.exe',
+            'xz.exe','unxz.exe','xzcat.exe','zip.exe','unzip.exe','zstd.exe','unzstd.exe',
+            '7z.exe','7za.exe',
+            
+            # Checksums and encoding
+            'md5sum.exe','sha1sum.exe','sha224sum.exe','sha256sum.exe','sha384sum.exe','sha512sum.exe',
+            'cksum.exe','sum.exe','base64.exe','base32.exe',
+            
+            # System info and utilities
+            'uname.exe','hostname.exe','whoami.exe','id.exe','date.exe','uptime.exe',
+            'env.exe','printenv.exe','yes.exe','true.exe','false.exe','test.exe','expr.exe',
+            'seq.exe','timeout.exe','nice.exe','nohup.exe','tput.exe','stty.exe',
+            'groups.exe','logname.exe','who.exe','users.exe','nproc.exe',
+            
+            # Process management
+            'ps.exe','top.exe','kill.exe','pkill.exe','pgrep.exe','killall.exe',
+            
+            # Diff and patch
+            'diff.exe','sdiff.exe','diff3.exe','cmp.exe','patch.exe',
+            
+            # Network tools
+            'curl.exe','wget.exe','ping.exe','telnet.exe','ftp.exe','ssh.exe','scp.exe','sftp.exe',
+            
+            # File type and content
+            'file.exe','tree.exe',
+            
+            # Text editors and pagers
+            'nano.exe','vim.exe',
+            
+            # Math and utilities
+            'bc.exe','factor.exe','numfmt.exe','time.exe',
+            
+            # Archive utilities
+            'cpio.exe',
+            
+            # Text conversion
+            'dos2unix.exe','unix2dos.exe','uuencode.exe','uudecode.exe'
           )
 
+          # Copy from MSYS usr/bin first
           foreach ($b in $bins) {
             $src = Join-Path $msysBin $b
             if (Test-Path $src) {
               Copy-Item -Path $src -Destination $target -Force
-              Write-Host "Copied $b"
+              Write-Host "Copied $b from MSYS usr/bin"
             } else {
-              Write-Host "Missing $b in MSYS usr/bin; skipping"
+              # Try mingw64/bin as fallback
+              $srcMingw = Join-Path $mingwBin $b
+              if (Test-Path $srcMingw) {
+                Copy-Item -Path $srcMingw -Destination $target -Force
+                Write-Host "Copied $b from mingw64/bin"
+              } else {
+                Write-Host "Missing $b in both MSYS and mingw bins; skipping"
+              }
+            }
+          }
+
+      - name: Discover and copy additional useful binaries
+        shell: pwsh
+        run: |
+          $target = Join-Path $Env:GITHUB_WORKSPACE 'artifacts\msys_x86_64'
+          $msysBin = 'C:\msys64\usr\bin'
+          $mingwBin = 'C:\msys64\mingw64\bin'
+          
+          # Additional binaries that might be available but not in our main list
+          $additionalBins = @(
+            'watch.exe','htop.exe','iotop.exe','iftop.exe','rsync.exe','rg.exe','ag.exe',
+            'jq.exe','nc.exe','netcat.exe','nmap.exe','socat.exe','screen.exe','tmux.exe',
+            'git.exe','cvs.exe','svn.exe','bzr.exe','hg.exe','zip.exe','rar.exe',
+            'sqlite3.exe','mysql.exe','psql.exe','mongo.exe','redis-cli.exe',
+            'python.exe','python3.exe','perl.exe','ruby.exe','node.exe','php.exe',
+            'gcc.exe','g++.exe','make.exe','cmake.exe','autoconf.exe','automake.exe',
+            'pkg-config.exe','libtool.exe','strip.exe','objdump.exe','nm.exe','readelf.exe',
+            'gdb.exe','lldb.exe','valgrind.exe','strace.exe','ltrace.exe',
+            'awk.exe','mawk.exe','nawk.exe','dc.exe','units.exe','cal.exe',
+            'banner.exe','figlet.exe','cowsay.exe','fortune.exe','sl.exe'
+          )
+          
+          foreach ($b in $additionalBins) {
+            # Skip if we already copied this binary
+            if (Test-Path (Join-Path $target $b)) { continue }
+            
+            $src = Join-Path $msysBin $b
+            if (Test-Path $src) {
+              Copy-Item -Path $src -Destination $target -Force
+              Write-Host "Copied additional binary $b from MSYS usr/bin"
+            } else {
+              $srcMingw = Join-Path $mingwBin $b
+              if (Test-Path $srcMingw) {
+                Copy-Item -Path $srcMingw -Destination $target -Force
+                Write-Host "Copied additional binary $b from mingw64/bin"
+              }
+            }
+          }
+
+      - name: Create compatibility symlinks and copies
+        shell: pwsh
+        run: |
+          $target = Join-Path $Env:GITHUB_WORKSPACE 'artifacts\msys_x86_64'
+          
+          # Create compatibility copies for common alternative names
+          $compatMap = @{
+            'gawk.exe' = @('awk.exe')
+            'grep.exe' = @('rgrep.exe')
+            'gzip.exe' = @('compress.exe')
+            'gunzip.exe' = @('uncompress.exe')
+            'bzip2.exe' = @('bzip.exe')
+            'bunzip2.exe' = @('bunzip.exe')
+          }
+          
+          foreach ($source in $compatMap.Keys) {
+            $sourcePath = Join-Path $target $source
+            if (Test-Path $sourcePath) {
+              foreach ($alias in $compatMap[$source]) {
+                $aliasPath = Join-Path $target $alias
+                if (-not (Test-Path $aliasPath)) {
+                  Copy-Item -Path $sourcePath -Destination $aliasPath -Force
+                  Write-Host "Created compatibility copy: $alias -> $source"
+                }
+              }
             }
           }
 
@@ -102,13 +263,28 @@ jobs:
             Write-Host "Copied DLL: $(Split-Path $dll -Leaf)"
           }
 
-      - name: List copied files
+      - name: List copied files and provide summary
         shell: pwsh
         run: |
-          Get-ChildItem -Path 'artifacts\msys_x86_64' -File | Sort-Object Name | ForEach-Object { Write-Host $_.Name }
+          $files = Get-ChildItem -Path 'artifacts\msys_x86_64' -File | Sort-Object Name
+          $exeFiles = $files | Where-Object { $_.Extension -eq '.exe' }
+          $dllFiles = $files | Where-Object { $_.Extension -eq '.dll' }
+          
+          Write-Host "========================================="
+          Write-Host "SUMMARY OF COLLECTED BINARIES"
+          Write-Host "========================================="
+          Write-Host "Total files: $($files.Count)"
+          Write-Host "Executables (.exe): $($exeFiles.Count)"
+          Write-Host "Libraries (.dll): $($dllFiles.Count)"
+          Write-Host ""
+          Write-Host "EXECUTABLES:"
+          $exeFiles | ForEach-Object { Write-Host "  $($_.Name)" }
+          Write-Host ""
+          Write-Host "LIBRARIES:"
+          $dllFiles | ForEach-Object { Write-Host "  $($_.Name)" }
 
       - name: Upload binaries artifact
         uses: actions/upload-artifact@v4
         with:
-          name: msys2-msys-binaries-x86_64
+          name: msys2-comprehensive-binaries-x86_64
           path: artifacts/msys_x86_64
