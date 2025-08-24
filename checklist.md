@@ -1,6 +1,7 @@
 ## Coverage Checklist (grouped by category)
 
 Use this as the master checklist for what to bundle or map. Check off as you implement.
+
 ### Detected / checked (from available EXE binaries)
 
 - [x] base64
@@ -65,6 +66,7 @@ Use this as the master checklist for what to bundle or map. Check off as you imp
 - [x] csplit
 
 Remaining (not found among provided EXE files)
+
 - dir, vdir
 - tac
 - hexdump
@@ -153,6 +155,7 @@ Remaining (not found among provided EXE files)
 Core file/directory and metadata (Coreutils-ish)
 
 Color-capable (accept "--color=auto"): ls, grep
+
 - [ ] ls
 - [ ] dir, vdir (optional)
 - [ ] cp
@@ -177,6 +180,7 @@ Color-capable (accept "--color=auto"): ls, grep
 - [ ] truncate
 
 Text processing and filtering
+
 - [ ] cat
 - [ ] tac
 - [ ] head
@@ -211,6 +215,7 @@ Text processing and filtering
 - [ ] ptx (optional)
 
 Search / filesystem traversal
+
 - [ ] find
 - [ ] locate (optional; requires database)
 - [ ] updatedb (optional; for locate DB)
@@ -218,6 +223,7 @@ Search / filesystem traversal
 - [ ] whereis (optional)
 
 Archiving and compression
+
 - [ ] tar
 - [ ] cpio (optional)
 - [ ] pax (optional)
@@ -236,6 +242,7 @@ Archiving and compression
 - [ ] unzstd (zstd -d)
 
 Checksums, hashes, encoding
+
 - [ ] md5sum
 - [ ] sha1sum
 - [ ] sha224sum
@@ -248,6 +255,7 @@ Checksums, hashes, encoding
 - [ ] base64
 
 Environment and session
+
 - [ ] env
 - [ ] printenv
 - [ ] yes
@@ -264,6 +272,7 @@ Environment and session
 - [ ] tput (optional)
 
 System info and identity
+
 - [ ] uname
 - [ ] hostname
 - [ ] whoami
@@ -277,6 +286,7 @@ System info and identity
 - [ ] uptime (optional; non-coreutils on Linux)
 
 Process and signals
+
 - [ ] ps
 - [ ] kill
 - [ ] pkill
@@ -285,6 +295,7 @@ Process and signals
 - [ ] watch (optional)
 
 Diff/patch and build helpers
+
 - [ ] diff
 - [ ] sdiff
 - [ ] diff3
@@ -293,6 +304,7 @@ Diff/patch and build helpers
 - [ ] file
 
 Networking/transfer
+
 - [ ] curl
 - [ ] wget
 - [ ] ping
@@ -307,6 +319,7 @@ Networking/transfer
 - [ ] sftp (optional)
 
 Miscellaneous convenience
+
 - [ ] tree (optional)
 - [ ] realpath (duplicate noted above; ensure single implementation)
 - [ ] mktemp
@@ -320,8 +333,8 @@ Miscellaneous convenience
 - [ ] timeout (duplicate noted above)
 - [ ] watch (duplicate noted above)
 
-
 ## Builtins to wrap or emulate (opt-in)
+
 Some commands are typically builtins but are useful to expose as pipe-aware helpers.
 
 - [ ] cd (shell builtin; wrap to accept pipeline)

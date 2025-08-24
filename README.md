@@ -1,12 +1,13 @@
 # MKCD - Linux Utilities for Windows
 
-Tired of switching between PowerShell and WSL just to use basic Linux commands? MKCD brings over 70 essential Linux utilities directly to your Windows command line. No virtual machines, no containers, no hassle.
+Have you ever typed `ps | grep edge` or `wget https://example.com` or some other command with Linux utilities, only to find out you are in windows and have to use the stupid PowerShell syntax that no one knows about? You may even be tricked into thinking the command exists because of PowerShell aliases that are nonfunctional. That's why MKCD exists. MKCD brings over 70 essential Linux utilities directly to your Windows command line. No virtual machines, no containers, no hassle.
 
 ## Why MKCD?
 
 Working on Windows but miss the power of Linux command-line tools? You're not alone. Whether you're a developer who needs `grep` for quick searches, a sysadmin who relies on `tail` for log monitoring, or anyone who finds Windows equivalents just don't cut it, MKCD has you covered.
 
 MKCD provides native Windows executables for all your favorite Linux utilities:
+
 - **Text processing**: `grep`, `sed`, `awk`, `cut`, `sort`, `uniq`
 - **File operations**: `ls`, `cp`, `mv`, `rm`, `find`, `chmod`
 - **System monitoring**: `ps`, `top`, `df`, `du`, `stat`
@@ -21,19 +22,25 @@ Getting started with MKCD is straightforward, but there are a few important step
 > Note: `ls`, `cat`, `curl`, etc are mapped as aliases in PowerShell (which can cause confusion when you type something like `ls -la`), but they are removed and readded automatically on install/uninstall.
 
 ### Step 1: Install the Package
+
 ```bash
 pip install mkcd
 ```
 
 ### Step 2: Run the Installer
+
 ```bash
 mkcd-install
 ```
+
 If Python scripts are not on PATH, you can run this:
+
 ```bash
 python -c "import mkcd;mkcd.install()"
 ```
+
 This will:
+
 1. Launch a User Account Control (UAC) dialog asking for administrator privileges
 2. You will have to click "Yes" to grant permission (required to modify system PATH)
 3. Open a new elevated command window
@@ -41,33 +48,9 @@ This will:
 5. The elevated window will close automatically
 
 ### Step 3: Open a New Terminal
+
 > **Important**: You must open a completely new terminal window for the changes to take effect. Simply opening a new tab in Windows Terminal may not work - you need to close and reopen the entire application.
-
-If commands still aren't recognized after opening a new terminal, a system restart may be required.
-
-## Quick Start
-
-Once installed, you can immediately start using Linux commands in any Windows terminal:
-
-```bash
-# List files with details and colors
-ls.exe -la
-
-# Search for text in files
-grep "error" *.log
-
-# Monitor log files in real-time
-tail -f application.log
-
-# Find files by name
-find . -name "*.txt"
-
-# Count lines, words, and characters
-wc myfile.txt
-
-# Extract archives
-tar -xzf archive.tar.gz
-```
+> If commands still aren't recognized after opening a new terminal, a system restart may be required.
 
 ## Colorized Output
 
@@ -76,20 +59,25 @@ MKCD automatically enables colorized output for `ls` and `grep` commands, making
 ## Troubleshooting
 
 ### Commands Not Found After Installation
+
 - Make sure you opened a completely new terminal (not just a new tab)
 - Try restarting your computer
 - Check if the installation succeeded by running `mkcd-install` again
 
 ### UAC Prompts
+
 The installer needs administrator privileges to modify your system PATH. This is normal and safe - we only modify environment variables to make the Linux utilities available system-wide.
 
 ### Uninstalling
+
 To remove MKCD utilities from your PATH:
+
 ```bash
 mkcd-uninstall
 ```
 
 To completely remove the package:
+
 ```bash
 pip uninstall mkcd
 ```

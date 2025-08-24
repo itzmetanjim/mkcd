@@ -64,15 +64,21 @@ jobs:
             subversion
             mercurial
             cvs
-            screen
             tmux
             jq
-            nmap
             socat
             sqlite
-            figlet
-            units
-            calc
+
+      - name: Install additional optional packages (ignore failures)
+        shell: bash
+        run: |
+          # Try to install additional packages that might not be available
+          # Use || true to ignore failures for packages that don't exist
+          pacman -S --noconfirm --needed screen || echo "screen package not available"
+          pacman -S --noconfirm --needed nmap || echo "nmap package not available"  
+          pacman -S --noconfirm --needed figlet || echo "figlet package not available"
+          pacman -S --noconfirm --needed units || echo "units package not available"
+          pacman -S --noconfirm --needed calc || echo "calc package not available"
 
       - name: Prepare target directory and copy selected binaries (MSYS builds)
         shell: pwsh
@@ -166,16 +172,13 @@ jobs:
           
           # Additional binaries that might be available but not in our main list
           $additionalBins = @(
-            'watch.exe','htop.exe','iotop.exe','iftop.exe','rsync.exe','rg.exe','ag.exe',
-            'jq.exe','nc.exe','netcat.exe','nmap.exe','socat.exe','screen.exe','tmux.exe',
-            'git.exe','cvs.exe','svn.exe','bzr.exe','hg.exe','zip.exe','rar.exe',
-            'sqlite3.exe','mysql.exe','psql.exe','mongo.exe','redis-cli.exe',
-            'python.exe','python3.exe','perl.exe','ruby.exe','node.exe','php.exe',
+            'watch.exe','htop.exe','rsync.exe','rg.exe','ag.exe',
+            'jq.exe','nc.exe','netcat.exe','socat.exe','tmux.exe',
+            'git.exe','cvs.exe','svn.exe','bzr.exe','hg.exe',
+            'sqlite3.exe','python.exe','python3.exe','perl.exe','ruby.exe','node.exe',
             'gcc.exe','g++.exe','make.exe','cmake.exe','autoconf.exe','automake.exe',
             'pkg-config.exe','libtool.exe','strip.exe','objdump.exe','nm.exe','readelf.exe',
-            'gdb.exe','lldb.exe','valgrind.exe','strace.exe','ltrace.exe',
-            'awk.exe','mawk.exe','nawk.exe','dc.exe','units.exe','cal.exe',
-            'banner.exe','figlet.exe','cowsay.exe','fortune.exe','sl.exe'
+            'gdb.exe','awk.exe','mawk.exe','nawk.exe','dc.exe','cal.exe'
           )
           
           foreach ($b in $additionalBins) {
