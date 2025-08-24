@@ -1,6 +1,164 @@
-## Coverage Checklist (grouped by category)
+# Coverage Checklist (grouped by category)
+
+## Checklist
 
 Use this as the master checklist for what to bundle or map. Check off as you implement.
+
+## Newly available binaries (EXEs)
+
+- awk.exe
+- base32.exe
+- base64.exe
+- bunzip.exe
+- bunzip2.exe
+- bzcat.exe
+- bzip.exe
+- bzip2.exe
+- cal.exe
+- cat.exe
+- cksum.exe
+- column.exe
+- comm.exe
+- compress.exe
+- cp.exe
+- csplit.exe
+- cut.exe
+- curl.exe
+- date.exe
+- df.exe
+- du.exe
+- env.exe
+- expr.exe
+- expand.exe
+- file.exe
+- find.exe
+- fmt.exe
+- fold.exe
+- ftp.exe
+- gawk.exe
+- grep.exe
+- groups.exe
+- gzip.exe
+- head.exe
+- hexdump.exe
+- id.exe
+- install.exe
+- join.exe
+- kill.exe
+- less.exe
+- ln.exe
+- locate.exe
+- logname.exe
+- ls.exe
+- md5sum.exe
+- mkdir.exe
+- mktemp.exe
+- more.exe
+- mv.exe
+- nano.exe
+- nl.exe
+- nohup.exe
+- numfmt.exe
+- nproc.exe
+- od.exe
+- paste.exe
+- pathchk.exe
+- perl.exe
+- printenv.exe
+- ps.exe
+- pwd.exe
+- realpath.exe
+- rgrep.exe
+- rev.exe
+- rmdir.exe
+- rm.exe
+- sed.exe
+- seq.exe
+- sha1sum.exe
+- sha224sum.exe
+- sha256sum.exe
+- sha384sum.exe
+- sha512sum.exe
+- shuf.exe
+- sort.exe
+- split.exe
+- stat.exe
+- sync.exe
+- tac.exe
+- tail.exe
+- tar.exe
+- telnet.exe
+- test.exe
+- time.exe
+- timeout.exe
+- tput.exe
+- touch.exe
+- tr.exe
+- true.exe
+- truncate.exe
+- tsort.exe
+- uname.exe
+- uniq.exe
+- unexpand.exe
+- unxz.exe
+- unzstd.exe
+- users.exe
+- who.exe
+- wget.exe
+- which.exe
+- whereis.exe
+- xargs.exe
+- xz.exe
+- xzcat.exe
+- zstd.exe
+- tee.exe
+
+## Still remaining binaries (mentioned in the "Remaining" checklist but NOT present among the EXEs listed above)
+
+- dir, vdir
+- strings
+- egrep (compat)
+- fgrep (compat)
+- ptx
+- updatedb
+- cpio
+- pax
+- zip
+- unzip
+- gunzip
+- zcat
+- shasum
+- uptime
+- pkill
+- pgrep
+- top
+- watch
+- diff
+- sdiff
+- diff3
+- cmp
+- patch
+- ping
+- traceroute
+- nc (netcat)
+- dig
+- host
+- nslookup
+- ssh
+- scp
+- sftp
+- tree
+- uuencode / uudecode
+- cd (shell builtin — wrapper optional)
+- pushd / popd (shell builtins — wrappers optional)
+- alias / unalias (shell builtins — wrappers optional)
+- any other duplicates noted in the main checklist (resolve after insertion)
+
+---
+
+## **EVERYTHING BELOW IS OLD**
+
+---
 
 ### Detected / checked (from available EXE binaries)
 
@@ -151,6 +309,8 @@ Remaining (not found among provided EXE files)
 - alias/unalias
 - time
 - any other duplicates noted in the main checklist (resolve after insertion)
+
+---
 
 Core file/directory and metadata (Coreutils-ish)
 

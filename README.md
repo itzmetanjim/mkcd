@@ -1,6 +1,8 @@
 # MKCD - Linux Utilities for Windows
 
-Have you ever typed `ps | grep edge` or `wget https://example.com` or some other command with Linux utilities, only to find out you are in windows and have to use the stupid PowerShell syntax that no one knows about? You may even be tricked into thinking the command exists because of PowerShell aliases that are nonfunctional. That's why MKCD exists. MKCD brings over 70 essential Linux utilities directly to your Windows command line. No virtual machines, no containers, no hassle.
+Have you ever typed `ps | grep edge` or `wget https://example.com` or some other command with Linux utilities, only to find out you are in windows and have to use the stupid PowerShell syntax that no one knows about? You may even be tricked into thinking the command exists because of PowerShell aliases that are nonfunctional. That's why MKCD exists. MKCD brings over 70\* essential Linux utilities directly to your Windows command line. No virtual machines, no containers, no hassle.
+
+\*not all are available now
 
 ## Why MKCD?
 
@@ -8,11 +10,11 @@ Working on Windows but miss the power of Linux command-line tools? You're not al
 
 MKCD provides native Windows executables for all your favorite Linux utilities:
 
-- **Text processing**: `grep`, `sed`, `awk`, `cut`, `sort`, `uniq`
-- **File operations**: `ls`, `cp`, `mv`, `rm`, `find`, `chmod`
-- **System monitoring**: `ps`, `top`, `df`, `du`, `stat`
-- **Archive handling**: `tar`, `gzip`, `gunzip`, `zip`
-- **And many more**: `head`, `tail`, `cat`, `wc`, `diff`, `which`, `whereis`
+- **Text processing**: `grep`, `sed`, `awk`, `cut`, `sort`, `uniq`,...
+- **File operations**: `ls`, `cp`, `mv`, `rm`, `find`, `chmod`,...
+- **System monitoring**: `ps`, `top`, `df`, `du`, `stat`,...
+- **Archive handling**: `tar`, `gzip`, `gunzip`, `zip`,`xz`,...
+- **And many more**: `head`, `tail`, `cat`, `wc`, `diff`, `which`, `whereis`,...
 
 No learning curve. No compatibility issues. Just the Linux tools you know and love, running natively on Windows.
 
@@ -39,22 +41,57 @@ If Python scripts are not on PATH, you can run this:
 python -c "import mkcd;mkcd.install()"
 ```
 
-This will:
-
-1. Launch a User Account Control (UAC) dialog asking for administrator privileges
-2. You will have to click "Yes" to grant permission (required to modify system PATH)
-3. Open a new elevated command window
-4. After the installation completes and shows "Operation completed. Press any key to close this window...", press Enter
-5. The elevated window will close automatically
-
-### Step 3: Open a New Terminal
-
 > **Important**: You must open a completely new terminal window for the changes to take effect. Simply opening a new tab in Windows Terminal may not work - you need to close and reopen the entire application.
 > If commands still aren't recognized after opening a new terminal, a system restart may be required.
 
-## Colorized Output
+It will ask for permission to launch a UAC window. Type "y", hit enter, then click "Yes" in the window.
 
-MKCD automatically enables colorized output for `ls` and `grep` commands, making your terminal experience more pleasant and easier to read.
+Example Output:
+
+```plaintext
+Installing mkcd utilities...
+Found 61 executables and 20 DLL files
+Checking for conflicting PowerShell aliases...
+Found 9 conflicting aliases
+Conflicting PowerShell aliases detected:
+  cat -> Get-Content
+  cp -> Copy-Item
+  ls -> Get-ChildItem
+  mv -> Move-Item
+  pwd -> Get-Location
+  rm -> Remove-Item
+  rmdir -> Remove-Item
+  sort -> Sort-Object
+  tee -> Tee-Object
+Removing 9 conflicting PowerShell aliases...
+Updated PowerShell profile: C:\Users\hp\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1
+  Removed alias: cat -> Get-Content
+  Removed alias: cp -> Copy-Item
+  Removed alias: ls -> Get-ChildItem
+  Removed alias: mv -> Move-Item
+  Removed alias: pwd -> Get-Location
+  Removed alias: rm -> Remove-Item
+  Removed alias: rmdir -> Remove-Item
+  Removed alias: sort -> Sort-Object
+  Removed alias: tee -> Tee-Object
+System PATH modification requires admin privileges.
+System PATH modification requires administrator privileges.
+This will spawn a new elevated command prompt window.
+Would you like to request admin privileges? (Y/n): Y
+Requesting administrator privileges...
+Please click 'Yes' in the UAC dialog that appears.
+Admin privileges granted. Operation running in elevated window...
+Please check the elevated command window for results.
+System PATH modification attempted in elevated window.
+Falling back to user PATH for current session...
+NOTE: To add manually, type in PowerShell: $env:Path += ';D:\SYSPY\Lib\site-packages\mkcd\_bin\windows_x86_64'
+or in CMD: setx PATH "%PATH%;D:\SYSPY\Lib\site-packages\mkcd\_bin\windows_x86_64"
+Successfully added to user PATH: D:\SYSPY\Lib\site-packages\mkcd\_bin\windows_x86_64
+Note: You may need to restart your shell for changes to take effect. In tabbed terminal emulators like Windows Terminal, you will have to open and close the entire app, not just the tab.
+Installation complete! Linux utilities are now available in your shell.
+Available commands: ls, cat, grep, sed, gawk, tar, gzip, and many more.
+Try running: ls --help
+```
 
 ## Troubleshooting
 
@@ -64,11 +101,27 @@ MKCD automatically enables colorized output for `ls` and `grep` commands, making
 - Try restarting your computer
 - Check if the installation succeeded by running `mkcd-install` again
 
-### UAC Prompts
+### `ls` and `grep` not being colorized or not working
 
-The installer needs administrator privileges to modify your system PATH. This is normal and safe - we only modify environment variables to make the Linux utilities available system-wide.
+This may be because your python scripts are not in PATH. To add them to PATH, first type this in PowerShell/CMD to find your Python installation:
 
-### Uninstalling
+```bash
+python -c "import sys; print(sys.executable)"
+```
+
+Your output should be like this: `C:\Python39\python.exe`, ending in `python.exe`. Remove the `python.exe` part, and add `Scripts\` to the end. In this example, it would be `C:\Python39\Scripts\`. Copy this new scripts path.
+
+Search for `Edit the system environment variables` in your search bar, hit Enter, then click Environment Variables. In both the "User variables" and "System variables",  find where the variable name is Path, then click "Edit" > "New", then paste your copied path. Click "Ok" > "Ok".
+
+You can also run the following command in PowerShell:
+
+```pwsh
+$env:Path += ';' + "<your script path>"
+```
+
+No matter which method you choose, make sure to restart your terminal for the changes to take effect.
+
+## Uninstalling
 
 To remove MKCD utilities from your PATH:
 
@@ -76,26 +129,16 @@ To remove MKCD utilities from your PATH:
 mkcd-uninstall
 ```
 
+> Some utilities like `ls` and `grep` may stay. This is because they are linked as a script for colorization.
+> Running the previous command will not delete the binaries from your computer.
+
+You will need admin privileges.
+
 To completely remove the package:
 
 ```bash
 pip uninstall mkcd
 ```
-
-## What's Included
-
-MKCD includes over 70 Linux utilities compiled for Windows, including:
-
-| Category | Commands |
-|----------|----------|
-| **File Operations** | `cp`, `mv`, `rm`, `mkdir`, `rmdir`, `ls`, `chmod`, `chown` |
-| **Text Processing** | `grep`, `sed`, `gawk`, `cut`, `sort`, `uniq`, `tr`, `wc` |
-| **File Viewing** | `cat`, `head`, `tail`, `less`, `more` |
-| **Archive Tools** | `tar`, `gzip`, `gunzip`, `bzip2`, `bunzip2`, `xz`, `unxz` |
-| **System Info** | `ps`, `top`, `df`, `du`, `stat`, `uname`, `whoami`, `which` |
-| **Text Utilities** | `diff`, `comm`, `join`, `paste`, `column`, `fmt`, `fold` |
-
-And many more! Each command works just like its Linux counterpart, with the same options and behavior you expect.
 
 ## Requirements
 
@@ -106,4 +149,5 @@ And many more! Each command works just like its Linux counterpart, with the same
 ## License
 
 MKCD is released under the MIT License. See the LICENSE file for details.
-The MSYS2 project, which provides the underlying tools, is licensed under the GNU General Public License v3.0 (GPL-3.0). MKCD does not include any GPL-licensed code; it simply uses the MSYS2 environment to compile and run the utilities.
+
+The MSYS2 project, which provides the underlying tools, is licensed under the GNU General Public License v3.0 (GPL-3.0). MKCD does not include any GPL-licensed code; it uses the MSYS2 environment to compile and run the utilities.
