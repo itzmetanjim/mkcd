@@ -34,7 +34,6 @@ MKCD provides native Windows executables for all your favorite Linux utilities:
 
 **Miscellaneous / Utilities** `date`, `cal`, `paste`, `comm`, `pathchk`, `install`, `mktemp`, `tput`, `tsort`
 
-**Planned** 
 
 No learning curve. No compatibility issues. Just the Linux tools you know and love, running natively on Windows.
 
