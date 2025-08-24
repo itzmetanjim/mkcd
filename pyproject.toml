@@ -1,6 +1,6 @@
 [project]
 name = "mkcd"
-version = "1.0.5"
+version = "1.0.6"
 authors = [
   { name="Tanjim Kamal", email="tanjimkamal1@gmail.com" },
 ]

@@ -20,7 +20,7 @@ if sys.platform == "win32":
 else:
     winreg = None
 
-__version__ = "1.0.5"
+__version__ = "1.0.6"
 
 def is_admin():
     """Check if the current process is running with administrator privileges."""
