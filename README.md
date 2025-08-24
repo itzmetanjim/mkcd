@@ -1,8 +1,6 @@
 # MKCD - Linux Utilities for Windows
 
-Have you ever typed `ps | grep edge` or `wget https://example.com` or some other command with Linux utilities, only to find out you are in windows and have to use the stupid PowerShell syntax that no one knows about? You may even be tricked into thinking the command exists because of PowerShell aliases that are nonfunctional. That's why MKCD exists. MKCD brings over 70\* essential Linux utilities directly to your Windows command line. No virtual machines, no containers, no hassle.
-
-\*not all are available now
+Have you ever typed `ps | grep edge` or `wget https://example.com` or some other command with Linux utilities, only to find out you are in windows and have to use the stupid PowerShell syntax that no one knows about? You may even be tricked into thinking the command exists because of PowerShell aliases that are nonfunctional. That's why MKCD exists. MKCD brings over 100 essential Linux utilities directly to your Windows command line. No virtual machines, no containers, no hassle.
 
 ## Why MKCD?
 
@@ -10,11 +8,33 @@ Working on Windows but miss the power of Linux command-line tools? You're not al
 
 MKCD provides native Windows executables for all your favorite Linux utilities:
 
-- **Text processing**: `grep`, `sed`, `awk`, `cut`, `sort`, `uniq`,...
-- **File operations**: `ls`, `cp`, `mv`, `rm`, `find`, `chmod`,...
-- **System monitoring**: `ps`, `top`, `df`, `du`, `stat`,...
-- **Archive handling**: `tar`, `gzip`, `gunzip`, `zip`,`xz`,...
-- **And many more**: `head`, `tail`, `cat`, `wc`, `diff`, `which`, `whereis`,...
+### Included Utilities
+
+**Most Common** `grep`, `awk`, `sed`, `find`, `curl`,`ls`,`tar`,`gzip`,`wget`,`cat`,`ps`,`kill`,`cp`,`mv`,`rm`,`mkdir`,`rmdir`
+
+**Text processing & filtering** `awk`, `gawk` (another implementation of `awk`), `sed`, `grep` (find a piece of text), `rgrep` (recursive `grep`), `cut`, `paste`, `join`, `tr`, `rev`, `fmt`, `fold`, `expand`, `unexpand`, `column`, `comm`, `csplit`, `split`, `shuf`, `sort`, `uniq`, `tsort`, `seq`, `head`, `tail`, `tac`, `nl`
+
+**File & directory operations** `ls`, `cp`, `mv`, `rm`, `rmdir`, `ln`, `mkdir`, `mktemp`, `touch`, `install`, `realpath`, `pathchk`, `pwd` (print working directory), `find`, `locate`
+
+**Compression & archives** `tar`, `gzip`, `gunzip` (compatibility via `gzip`/`uncompress` functionality), `bzip`, `bzip2`, `bunzip` (bzip unzip), `bunzip2`, `bzcat`,  `compress`, `xz`, `xzcat`, `unxz`, `zstd`, `unzstd`, `split`
+
+**Checksums, hashing & encodings** `cksum`, `md5sum`, `sha1sum`, `sha224sum`, `sha256sum`, `sha384sum`, `sha512sum`, `base32`, `base64`, `numfmt`
+
+**System, processes & scheduling** `ps`, `kill`, `nohup`, `timeout`, `time`, `sync`, `nproc`, `uname`, `who`, `users`, `groups`, `id`, `logname`, `env`, `printenv`
+
+**Disk & filesystem info** `df`, `du`, `stat`, `truncate`
+
+**Networking & transfers** `curl`, `wget`, `ftp`, `telnet`
+
+**Viewing, paging & editors** `cat`, `less`, `more`, `nano`, `hexdump`, `od`
+
+**Scripting helpers & shell utilities** `perl`, `expr`, `test`, `xargs`, `tee`, `tput`, `true`
+
+**Lookup & diagnostics** `which`, `whereis`, `file`
+
+**Miscellaneous / Utilities** `date`, `cal`, `paste`, `comm`, `pathchk`, `install`, `mktemp`, `tput`, `tsort`
+
+**Planned** 
 
 No learning curve. No compatibility issues. Just the Linux tools you know and love, running natively on Windows.
 
