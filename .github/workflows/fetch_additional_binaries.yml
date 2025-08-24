@@ -1,0 +1,358 @@
+name: Fetch additional binaries from multiple sources
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fetch-additional-binaries:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSYS2 for additional packages
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MSYS
+          update: true
+          install: |
+            binutils
+            diffutils
+            patch
+            procps-ng
+            inetutils
+            openssh
+            bind-tools
+            sharutils
+
+      - name: Create target directory
+        shell: pwsh
+        run: |
+          $target = Join-Path $Env:GITHUB_WORKSPACE 'artifacts\additional_binaries'
+          New-Item -ItemType Directory -Force -Path $target | Out-Null
+
+      - name: Copy MSYS2 binaries that were missed
+        shell: pwsh
+        run: |
+          $target = Join-Path $Env:GITHUB_WORKSPACE 'artifacts\additional_binaries'
+          $msysBin = 'C:\msys64\usr\bin'
+          
+          # Binaries that should be available in MSYS2 but might have been missed
+          $msysBins = @(
+            'strings.exe',      # from binutils
+            'diff.exe',         # from diffutils
+            'sdiff.exe',        # from diffutils
+            'diff3.exe',        # from diffutils  
+            'cmp.exe',          # from diffutils
+            'patch.exe',        # from patch
+            'top.exe',          # from procps-ng
+            'pkill.exe',        # from procps-ng
+            'pgrep.exe',        # from procps-ng
+            'uptime.exe',       # from procps-ng
+            'watch.exe',        # from procps-ng
+            'ping.exe',         # from inetutils
+            'telnet.exe',       # from inetutils
+            'ftp.exe',          # from inetutils
+            'ssh.exe',          # from openssh
+            'scp.exe',          # from openssh
+            'sftp.exe',         # from openssh
+            'dig.exe',          # from bind-tools
+            'host.exe',         # from bind-tools
+            'nslookup.exe',     # from bind-tools
+            'uuencode.exe',     # from sharutils
+            'uudecode.exe'      # from sharutils
+          )
+          
+          foreach ($bin in $msysBins) {
+            $src = Join-Path $msysBin $bin
+            if (Test-Path $src) {
+              Copy-Item -Path $src -Destination $target -Force
+              Write-Host "Copied $bin from MSYS2"
+            } else {
+              Write-Host "Missing $bin in MSYS2"
+            }
+          }
+
+      - name: Download and extract BusyBox for small utilities
+        shell: pwsh
+        run: |
+          $target = Join-Path $Env:GITHUB_WORKSPACE 'artifacts\additional_binaries'
+          $tempDir = Join-Path $Env:TEMP 'busybox_temp'
+          New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
+          
+          # Download BusyBox for Windows
+          $busyboxUrl = 'https://frippery.org/files/busybox/busybox.exe'
+          $busyboxPath = Join-Path $tempDir 'busybox.exe'
+          
+          try {
+            Invoke-WebRequest -Uri $busyboxUrl -OutFile $busyboxPath -UseBasicParsing
+            Write-Host "Downloaded BusyBox"
+            
+            # Copy busybox and create symlinks for missing utilities
+            Copy-Item -Path $busyboxPath -Destination (Join-Path $target 'busybox.exe') -Force
+            
+            # Create copies for utilities that BusyBox provides
+            $busyboxUtils = @('traceroute', 'nc')
+            foreach ($util in $busyboxUtils) {
+              $utilPath = Join-Path $target "$util.exe"
+              if (-not (Test-Path $utilPath)) {
+                Copy-Item -Path $busyboxPath -Destination $utilPath -Force
+                Write-Host "Created BusyBox copy: $util.exe"
+              }
+            }
+          } catch {
+            Write-Host "Failed to download BusyBox: $($_.Exception.Message)"
+          }
+
+      - name: Download 7-Zip for zip/unzip functionality
+        shell: pwsh
+        run: |
+          $target = Join-Path $Env:GITHUB_WORKSPACE 'artifacts\additional_binaries'
+          $tempDir = Join-Path $Env:TEMP '7zip_temp'
+          New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
+          
+          # Download 7-Zip command line
+          $sevenZipUrl = 'https://www.7-zip.org/a/7zr.exe'
+          $sevenZipPath = Join-Path $tempDir '7zr.exe'
+          
+          try {
+            Invoke-WebRequest -Uri $sevenZipUrl -OutFile $sevenZipPath -UseBasicParsing
+            Write-Host "Downloaded 7-Zip"
+            
+            # Copy as zip.exe and unzip.exe for compatibility
+            Copy-Item -Path $sevenZipPath -Destination (Join-Path $target 'zip.exe') -Force
+            Copy-Item -Path $sevenZipPath -Destination (Join-Path $target 'unzip.exe') -Force
+            Copy-Item -Path $sevenZipPath -Destination (Join-Path $target '7zr.exe') -Force
+            Write-Host "Created zip/unzip utilities from 7-Zip"
+          } catch {
+            Write-Host "Failed to download 7-Zip: $($_.Exception.Message)"
+          }
+
+      - name: Extract utilities from Git for Windows
+        shell: pwsh
+        run: |
+          $target = Join-Path $Env:GITHUB_WORKSPACE 'artifacts\additional_binaries'
+          
+          # Common Git for Windows installation paths
+          $gitPaths = @(
+            'C:\Program Files\Git\usr\bin',
+            'C:\Program Files (x86)\Git\usr\bin',
+            'C:\Git\usr\bin'
+          )
+          
+          foreach ($gitPath in $gitPaths) {
+            if (Test-Path $gitPath) {
+              Write-Host "Found Git for Windows at: $gitPath"
+              
+              # List of utilities to extract from Git for Windows
+              $gitUtils = @(
+                'ssh.exe', 'scp.exe', 'sftp.exe',
+                'tree.exe', 'diff.exe', 'patch.exe'
+              )
+              
+              foreach ($util in $gitUtils) {
+                $srcPath = Join-Path $gitPath $util
+                $dstPath = Join-Path $target $util
+                if ((Test-Path $srcPath) -and (-not (Test-Path $dstPath))) {
+                  Copy-Item -Path $srcPath -Destination $dstPath -Force
+                  Write-Host "Copied $util from Git for Windows"
+                }
+              }
+              break
+            }
+          }
+
+      - name: Create compatibility aliases and wrappers
+        shell: pwsh
+        run: |
+          $target = Join-Path $Env:GITHUB_WORKSPACE 'artifacts\additional_binaries'
+          
+          # Create egrep and fgrep as grep wrappers
+          $egrepContent = '@echo off' + "`n" + 'grep -E %*'
+          $fgrepContent = '@echo off' + "`n" + 'grep -F %*'
+          
+          Set-Content -Path (Join-Path $target 'egrep.bat') -Value $egrepContent -Encoding ASCII
+          Set-Content -Path (Join-Path $target 'fgrep.bat') -Value $fgrepContent -Encoding ASCII
+          Write-Host "Created egrep.bat and fgrep.bat wrappers"
+          
+          # Create dir and vdir as ls wrappers
+          $dirContent = '@echo off' + "`n" + 'ls %*'
+          $vdirContent = '@echo off' + "`n" + 'ls -l %*'
+          
+          Set-Content -Path (Join-Path $target 'dir.bat') -Value $dirContent -Encoding ASCII
+          Set-Content -Path (Join-Path $target 'vdir.bat') -Value $vdirContent -Encoding ASCII
+          Write-Host "Created dir.bat and vdir.bat wrappers"
+          
+          # Create gunzip as gzip -d wrapper
+          $gunzipContent = '@echo off' + "`n" + 'gzip -d %*'
+          
+          Set-Content -Path (Join-Path $target 'gunzip.bat') -Value $gunzipContent -Encoding ASCII
+          Write-Host "Created gunzip.bat wrapper"
+          
+          # Create zcat as gzip -cd wrapper
+          $zcatContent = '@echo off' + "`n" + 'gzip -cd %*'
+          
+          Set-Content -Path (Join-Path $target 'zcat.bat') -Value $zcatContent -Encoding ASCII
+          Write-Host "Created zcat.bat wrapper"
+
+      - name: Create shell builtin wrappers
+        shell: pwsh
+        run: |
+          $target = Join-Path $Env:GITHUB_WORKSPACE 'artifacts\additional_binaries'
+          
+          # Create cd wrapper that works with pipes
+          $cdContent = '@echo off' + "`n" + 'if "%~1"=="" (' + "`n" + '    cd' + "`n" + ') else (' + "`n" + '    cd /d "%~1"' + "`n" + ')'
+          
+          Set-Content -Path (Join-Path $target 'cd.bat') -Value $cdContent -Encoding ASCII
+          Write-Host "Created cd.bat wrapper"
+          
+          # Create pushd wrapper
+          $pushdContent = '@echo off' + "`n" + 'pushd "%~1"'
+          
+          Set-Content -Path (Join-Path $target 'pushd.bat') -Value $pushdContent -Encoding ASCII
+          Write-Host "Created pushd.bat wrapper"
+          
+          # Create popd wrapper  
+          $popdContent = '@echo off' + "`n" + 'popd'
+          
+          Set-Content -Path (Join-Path $target 'popd.bat') -Value $popdContent -Encoding ASCII
+          Write-Host "Created popd.bat wrapper"
+
+      - name: Download additional utilities from reliable sources
+        shell: pwsh
+        run: |
+          $target = Join-Path $Env:GITHUB_WORKSPACE 'artifacts\additional_binaries'
+          $tempDir = Join-Path $Env:TEMP 'additional_utils'
+          New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
+          
+          # Download tree utility
+          try {
+            $treeUrl = 'http://mama.indstate.edu/users/ice/tree/binaries/tree.exe'
+            $treePath = Join-Path $target 'tree.exe'
+            if (-not (Test-Path $treePath)) {
+              Invoke-WebRequest -Uri $treeUrl -OutFile $treePath -UseBasicParsing
+              Write-Host "Downloaded tree.exe"
+            }
+          } catch {
+            Write-Host "Failed to download tree.exe: $($_.Exception.Message)"
+          }
+
+      - name: Copy dependent DLLs for new binaries
+        shell: pwsh
+        run: |
+          $target = Join-Path $Env:GITHUB_WORKSPACE 'artifacts\additional_binaries'
+          $bash = 'C:\msys64\usr\bin\bash.exe'
+          if (-not (Test-Path $bash)) { 
+            Write-Host "MSYS2 bash not found, skipping DLL copy"
+            return
+          }
+
+          $exes = Get-ChildItem -Path $target -Filter '*.exe' -File | Select-Object -ExpandProperty FullName
+          $dlls = New-Object System.Collections.Generic.HashSet[string]
+
+          foreach ($exe in $exes) {
+            try {
+              # Pass Windows path via env var to avoid quoting issues
+              $Env:W_EXE = $exe
+              $exePosix = (& $bash -lc 'cygpath -u "$W_EXE"') -join "`n"
+              $exePosix = $exePosix.Trim()
+              if (-not $exePosix) { continue }
+
+              $Env:P_POSIX = $exePosix
+              $lddOut = (& $bash -lc 'ldd "$P_POSIX" 2>/dev/null || true') -join "`n"
+
+              foreach ($line in $lddOut -split "`n") {
+                $m = [regex]::Match($line, '=>\s+(/[^\s]+)')
+                if (-not $m.Success) { $m = [regex]::Match($line, '^\s+(/[^\s]+)') }
+                if ($m.Success) {
+                  $posixPath = $m.Groups[1].Value
+                  if ($posixPath -like '*.dll') {
+                    $Env:P_PATH = $posixPath
+                    $winPath = (& $bash -lc 'cygpath -w "$P_PATH"') -join "`n"
+                    $winPath = $winPath.Trim()
+                    if ($winPath -and (Test-Path $winPath)) { [void]$dlls.Add($winPath) }
+                  }
+                }
+              }
+            } catch {
+              Write-Host "Warning: Could not check dependencies for $exe"
+            }
+          }
+
+          foreach ($dll in $dlls) {
+            try {
+              Copy-Item -Path $dll -Destination $target -Force
+              Write-Host "Copied DLL: $(Split-Path $dll -Leaf)"
+            } catch {
+              Write-Host "Warning: Could not copy $(Split-Path $dll -Leaf)"
+            }
+          }
+
+      - name: Create summary report
+        shell: pwsh
+        run: |
+          $target = Join-Path $Env:GITHUB_WORKSPACE 'artifacts\additional_binaries'
+          $files = Get-ChildItem -Path $target -File | Sort-Object Name
+          $exeFiles = $files | Where-Object { $_.Extension -eq '.exe' }
+          $batFiles = $files | Where-Object { $_.Extension -eq '.bat' }
+          $dllFiles = $files | Where-Object { $_.Extension -eq '.dll' }
+          
+          Write-Host "========================================="
+          Write-Host "ADDITIONAL BINARIES COLLECTION SUMMARY"
+          Write-Host "========================================="
+          Write-Host "Total files: $($files.Count)"
+          Write-Host "Executables (.exe): $($exeFiles.Count)"
+          Write-Host "Batch wrappers (.bat): $($batFiles.Count)"
+          Write-Host "Libraries (.dll): $($dllFiles.Count)"
+          Write-Host ""
+          
+          if ($exeFiles.Count -gt 0) {
+            Write-Host "EXECUTABLES:"
+            $exeFiles | ForEach-Object { Write-Host "  $($_.Name)" }
+            Write-Host ""
+          }
+          
+          if ($batFiles.Count -gt 0) {
+            Write-Host "BATCH WRAPPERS:"
+            $batFiles | ForEach-Object { Write-Host "  $($_.Name)" }
+            Write-Host ""
+          }
+          
+          # Check which utilities from our target list we successfully obtained
+          $targetUtils = @(
+            'dir', 'vdir', 'strings', 'egrep', 'fgrep', 'ptx', 'updatedb', 'cpio', 'pax',
+            'zip', 'unzip', 'gunzip', 'zcat', 'shasum', 'uptime', 'pkill', 'pgrep',
+            'top', 'watch', 'diff', 'sdiff', 'diff3', 'cmp', 'patch', 'ping',
+            'traceroute', 'nc', 'dig', 'host', 'nslookup', 'ssh', 'scp', 'sftp',
+            'tree', 'uuencode', 'uudecode', 'cd', 'pushd', 'popd'
+          )
+          
+          $foundUtils = @()
+          $missingUtils = @()
+          
+          foreach ($util in $targetUtils) {
+            $exePath = Join-Path $target "$util.exe"
+            $batPath = Join-Path $target "$util.bat"
+            if ((Test-Path $exePath) -or (Test-Path $batPath)) {
+              $foundUtils += $util
+            } else {
+              $missingUtils += $util
+            }
+          }
+          
+          Write-Host "SUCCESSFULLY OBTAINED ($($foundUtils.Count)/$($targetUtils.Count)):"
+          $foundUtils | ForEach-Object { Write-Host "  ✓ $_" }
+          Write-Host ""
+          
+          if ($missingUtils.Count -gt 0) {
+            Write-Host "STILL MISSING ($($missingUtils.Count)):"
+            $missingUtils | ForEach-Object { Write-Host "  ✗ $_" }
+          }
+
+      - name: Upload additional binaries artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: additional-binaries-collection
+          path: artifacts/additional_binaries
