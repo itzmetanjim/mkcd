@@ -9,7 +9,10 @@ readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
+    "Operating System :: Microsoft :: Windows",
+    "Environment :: Win32 (MS Windows)",
+    "Topic :: Terminals",
+    "Development Status ::  5 - Production/Stable"
 ]
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
