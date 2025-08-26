@@ -24,7 +24,7 @@ jobs:
             procps-ng
             inetutils
             openssh
-            bind
+            bind-tools
             sharutils
 
       - name: Install additional optional packages (ignore failures)
