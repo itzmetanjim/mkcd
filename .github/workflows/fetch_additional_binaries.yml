@@ -24,7 +24,6 @@ jobs:
             procps-ng
             inetutils
             openssh
-            bind-tools
             sharutils
 
       - name: Install additional optional packages (ignore failures)
@@ -32,6 +31,7 @@ jobs:
         run: |
           # Try to install additional packages that might not be available
           # Use || true to ignore failures for packages that don't exist
+          pacman -S --noconfirm --needed bind-tools || echo "bind-tools package not available"
           pacman -S --noconfirm --needed bind-utils || echo "bind-utils package not available"
           pacman -S --noconfirm --needed dnsutils || echo "dnsutils package not available"
           pacman -S --noconfirm --needed tree || echo "tree package not available"
@@ -67,11 +67,15 @@ jobs:
             'ssh.exe',          # from openssh
             'scp.exe',          # from openssh
             'sftp.exe',         # from openssh
-            'dig.exe',          # from bind-tools
-            'host.exe',         # from bind-tools
-            'nslookup.exe',     # from bind-tools
             'uuencode.exe',     # from sharutils
             'uudecode.exe'      # from sharutils
+          )
+          
+          # Optional DNS utilities (might not be available)
+          $optionalBins = @(
+            'dig.exe',          # from bind-tools (if available)
+            'host.exe',         # from bind-tools (if available)
+            'nslookup.exe'      # from bind-tools (if available)
           )
           
           foreach ($bin in $msysBins) {
@@ -81,6 +85,16 @@ jobs:
               Write-Host "Copied $bin from MSYS2"
             } else {
               Write-Host "Missing $bin in MSYS2"
+            }
+          }
+          
+          foreach ($bin in $optionalBins) {
+            $src = Join-Path $msysBin $bin
+            if (Test-Path $src) {
+              Copy-Item -Path $src -Destination $target -Force
+              Write-Host "Copied optional $bin from MSYS2"
+            } else {
+              Write-Host "Optional $bin not available in MSYS2"
             }
           }
 
