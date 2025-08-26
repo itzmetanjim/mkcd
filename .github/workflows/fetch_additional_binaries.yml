@@ -24,8 +24,17 @@ jobs:
             procps-ng
             inetutils
             openssh
-            bind-tools
+            bind
             sharutils
+
+      - name: Install additional optional packages (ignore failures)
+        shell: bash
+        run: |
+          # Try to install additional packages that might not be available
+          # Use || true to ignore failures for packages that don't exist
+          pacman -S --noconfirm --needed bind-utils || echo "bind-utils package not available"
+          pacman -S --noconfirm --needed dnsutils || echo "dnsutils package not available"
+          pacman -S --noconfirm --needed tree || echo "tree package not available"
 
       - name: Create target directory
         shell: pwsh
@@ -170,29 +179,29 @@ jobs:
           $target = Join-Path $Env:GITHUB_WORKSPACE 'artifacts\additional_binaries'
           
           # Create egrep and fgrep as grep wrappers
-          $egrepContent = '@echo off' + "`n" + 'grep -E %*'
-          $fgrepContent = '@echo off' + "`n" + 'grep -F %*'
+          $egrepContent = "@echo off" + "`n" + "grep -E %*"
+          $fgrepContent = "@echo off" + "`n" + "grep -F %*"
           
           Set-Content -Path (Join-Path $target 'egrep.bat') -Value $egrepContent -Encoding ASCII
           Set-Content -Path (Join-Path $target 'fgrep.bat') -Value $fgrepContent -Encoding ASCII
           Write-Host "Created egrep.bat and fgrep.bat wrappers"
           
           # Create dir and vdir as ls wrappers
-          $dirContent = '@echo off' + "`n" + 'ls %*'
-          $vdirContent = '@echo off' + "`n" + 'ls -l %*'
+          $dirContent = "@echo off" + "`n" + "ls %*"
+          $vdirContent = "@echo off" + "`n" + "ls -l %*"
           
           Set-Content -Path (Join-Path $target 'dir.bat') -Value $dirContent -Encoding ASCII
           Set-Content -Path (Join-Path $target 'vdir.bat') -Value $vdirContent -Encoding ASCII
           Write-Host "Created dir.bat and vdir.bat wrappers"
           
           # Create gunzip as gzip -d wrapper
-          $gunzipContent = '@echo off' + "`n" + 'gzip -d %*'
+          $gunzipContent = "@echo off" + "`n" + "gzip -d %*"
           
           Set-Content -Path (Join-Path $target 'gunzip.bat') -Value $gunzipContent -Encoding ASCII
           Write-Host "Created gunzip.bat wrapper"
           
           # Create zcat as gzip -cd wrapper
-          $zcatContent = '@echo off' + "`n" + 'gzip -cd %*'
+          $zcatContent = "@echo off" + "`n" + "gzip -cd %*"
           
           Set-Content -Path (Join-Path $target 'zcat.bat') -Value $zcatContent -Encoding ASCII
           Write-Host "Created zcat.bat wrapper"
@@ -203,19 +212,19 @@ jobs:
           $target = Join-Path $Env:GITHUB_WORKSPACE 'artifacts\additional_binaries'
           
           # Create cd wrapper that works with pipes
-          $cdContent = '@echo off' + "`n" + 'if "%~1"=="" (' + "`n" + '    cd' + "`n" + ') else (' + "`n" + '    cd /d "%~1"' + "`n" + ')'
+          $cdContent = "@echo off" + "`n" + "if `"%~1`"==`"`" (" + "`n" + "    cd" + "`n" + ") else (" + "`n" + "    cd /d `"%~1`"" + "`n" + ")"
           
           Set-Content -Path (Join-Path $target 'cd.bat') -Value $cdContent -Encoding ASCII
           Write-Host "Created cd.bat wrapper"
           
           # Create pushd wrapper
-          $pushdContent = '@echo off' + "`n" + 'pushd "%~1"'
+          $pushdContent = "@echo off" + "`n" + "pushd `"%~1`""
           
           Set-Content -Path (Join-Path $target 'pushd.bat') -Value $pushdContent -Encoding ASCII
           Write-Host "Created pushd.bat wrapper"
           
           # Create popd wrapper  
-          $popdContent = '@echo off' + "`n" + 'popd'
+          $popdContent = "@echo off" + "`n" + "popd"
           
           Set-Content -Path (Join-Path $target 'popd.bat') -Value $popdContent -Encoding ASCII
           Write-Host "Created popd.bat wrapper"
