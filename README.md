@@ -1,3 +1,5 @@
+<img width="474" height="183" style="margin-left: auto; margin-right: auto;" class="mx-auto" alt="mkcd_logo" src="https://github.com/user-attachments/assets/bc267aa5-1e7d-4b20-8f4e-1a3ba6963ea1" />
+
 # MKCD - Linux Utilities for Windows
 
 Have you ever typed `ps | grep edge` or `wget https://example.com` or some other command with Linux utilities, only to find out you are in windows and have to use the stupid PowerShell syntax that no one knows about? You may even be tricked into thinking the command exists because of PowerShell aliases that are nonfunctional. That's why MKCD exists. MKCD brings over 100 essential Linux utilities directly to your Windows command line. No virtual machines, no containers, no hassle.
