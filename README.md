@@ -1,8 +1,12 @@
+<div align="center">
 <img width="474" height="183" style="margin-left: auto; margin-right: auto;" class="mx-auto" alt="mkcd_logo" src="https://github.com/user-attachments/assets/bc267aa5-1e7d-4b20-8f4e-1a3ba6963ea1" />
+</div>
 
 # MKCD - Linux Utilities for Windows
 
 Have you ever typed `ps | grep edge` or `wget https://example.com` or some other command with Linux utilities, only to find out you are in windows and have to use the stupid PowerShell syntax that no one knows about? You may even be tricked into thinking the command exists because of PowerShell aliases that are nonfunctional. That's why MKCD exists. MKCD brings over 100 essential Linux utilities directly to your Windows command line. No virtual machines, no containers, no hassle.
+
+To install, go to [Installation](#installation).
 
 ## Why MKCD?
 
@@ -56,7 +60,7 @@ pip install mkcd
 mkcd-install
 ```
 
-If Python scripts are not on PATH, you can run this:
+If Python scripts are not on PATH, you can run this instead. **However, it's highly recommended to add them to PATH for this. Check [How to add Python scripts to PATH](#How-to-add-Python-scripts-to-PATH).
 
 ```bash
 python -c "import mkcd;mkcd.install()"
@@ -120,11 +124,16 @@ Try running: ls --help
 
 - Make sure you opened a completely new terminal (not just a new tab)
 - Try restarting your computer
-- Check if the installation succeeded by running `mkcd-install` again
-
+- Check if the installation succeeded by running `mkcd-install` again. Or, type `mkcd-uninstall` to uninstall then reinstall using the install command.
+- [Add Python scripts to PATH](#How-to-add-Python-scripts-to-PATH)
+  
 ### `ls` and `grep` not being colorized or not working
 
-This may be because your python scripts are not in PATH. To add them to PATH, first type this in PowerShell/CMD to find your Python installation:
+This may be because your python scripts are not in PATH. To add them to PATH, check the section below.
+
+### How to add Python scripts to PATH
+
+First type this in PowerShell/CMD to find your Python installation:
 
 ```bash
 python -c "import sys; print(sys.executable)"
